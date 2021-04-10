@@ -27,7 +27,8 @@ draw :: GameObject -> Effect Unit
 draw obj = do
   canvas <- getCanvasElementById "output"
   context <- getContext2D $ unsafePartial $ fromJust canvas
-  drawImage context obj.image obj.x obj.y
+  drawImageFull context obj.image 0.0 0.0 obj.width obj.height obj.x obj.y obj.width obj.height
+  where frameCount = 4
 
 
 step :: GameState -> Ref.Ref (Set.Set String) -> Effect Unit
@@ -43,7 +44,7 @@ start (Just image) =  do
   currentWindow <- window
   keys <- Ref.new Set.empty
   time <- now
-  let state = { player : { x: 50.0, y: 50.0, width: 64.0, height: 64.0, speed: 10.0, image: image, frameStart: time, direction: DOWN }}
+  let state = { player : { x: 50.0, y: 50.0, width: 34.0, height: 52.0, speed: 10.0, image: image, frameStart: time, direction: DOWN }}
   void $ requestAnimationFrame (step state keys) currentWindow
 
 start Nothing = error "Się wyjebało"
