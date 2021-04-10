@@ -12,25 +12,42 @@ import Control.Comonad (extract)
 import Web.UIEvent.KeyboardEvent.EventTypes
 import Effect.Now (now)
 import Data.DateTime.Instant (Instant)
+import Data.Set as Set
+import Effect.Ref as Ref
+import Partial.Unsafe (unsafePartial)
 
 
 data Direction = UP | DOWN | LEFT | RIGHT
 
-type GameObject = { x :: Int, y :: Int, speed :: Int, image :: CanvasImageSource, frameStart :: Instant, direction :: Direction}
+type GameObject = { x :: Number, y :: Number, width :: Number, height :: Number, speed :: Number, image :: CanvasImageSource, frameStart :: Instant, direction :: Direction}
 type GameState = { player :: GameObject }
 
-step :: Effect Unit
-step = do
-  log "dupa"
+
+draw :: GameObject -> Effect Unit
+draw obj = do
+  canvas <- getCanvasElementById "output"
+  context <- getContext2D $ unsafePartial $ fromJust canvas
+  drawImage context obj.image obj.x obj.y
+
+
+step :: GameState -> Ref.Ref (Set.Set String) -> Effect Unit
+step state keys = do
+  draw state.player
+  currentWindow <- window
+  void $ requestAnimationFrame (step state keys) currentWindow
+
 
 start :: Maybe CanvasImageSource -> Effect Unit
 
 start (Just image) =  do
   currentWindow <- window
-  void $ requestAnimationFrame step currentWindow
-  where state = { player : { x: 50, y: 50, speed: 10, image: image, frameStart: now, direction: DOWN }}
+  keys <- Ref.new Set.empty
+  time <- now
+  let state = { player : { x: 50.0, y: 50.0, width: 64.0, height: 64.0, speed: 10.0, image: image, frameStart: time, direction: DOWN }}
+  void $ requestAnimationFrame (step state keys) currentWindow
 
 start Nothing = error "Się wyjebało"
+
 
 main :: Effect Unit
 main = tryLoadImage "ludzik.png" start
