@@ -48,12 +48,14 @@ type GameObject = { x :: Number, y :: Number, width :: Number, height :: Number,
 type GameState = { player :: GameObject }
 
 
-draw :: GameObject -> Effect Unit
-draw obj = do
-  canvas <- getCanvasElementById "output"
-  context <- getContext2D $ unsafePartial $ fromJust canvas
-  drawImageFull context obj.image 0.0 0.0 obj.width obj.height obj.x obj.y obj.width obj.height
-  where frameCount = 4
+draw :: Context2D -> GameObject -> Effect Unit
+draw context obj = do
+  drawImageFull context obj.image 0.0 (getY obj.direction * obj.height) obj.width obj.height obj.x obj.y obj.width obj.height
+  where
+    getY UP = 3.0
+    getY DOWN = 0.0
+    getY LEFT = 1.0
+    getY RIGHT = 2.0
 
 
 keyToDir "w" = Just UP
@@ -78,6 +80,9 @@ keyListener op ref event = do
 onKeyUp = keyListener Set.delete
 onKeyDown = keyListener Set.insert
 
+width = 800.0
+height = 600.0
+
 transformState ::  GameState -> Set.Set Direction -> Milliseconds -> GameState
 transformState state keys (Milliseconds delta) = state { player = (foldl applyKeys state.player keys) }
   where 
@@ -93,7 +98,14 @@ step lastFrame state keysRef = do
   let delta = subMiliseconds (unInstant time) (unInstant lastFrame)
   let newState = transformState state keys delta
 
-  draw newState.player
+  maybeCanvas <- getCanvasElementById "output"
+  let canvas = unsafePartial $ fromJust maybeCanvas
+  setCanvasWidth canvas width
+  setCanvasHeight canvas height
+  context <- getContext2D $ canvas
+  setFillStyle context "white"
+  fillRect context { x: 0.0, y: 0.0, width: width, height: height }
+  draw context newState.player
 
   currentWindow <- window
   void $ requestAnimationFrame (step time newState keysRef) currentWindow
