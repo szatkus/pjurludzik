@@ -25,5 +25,9 @@ instance directionShow :: Show Direction where
 
 data Animation = STANDING | MOVEMENT
 
+instance animationShow :: Show Animation where
+  show STANDING = "STANDING"
+  show MOVEMENT = "MOVEMENT"
+
 type GameObject = { x :: Number, y :: Number, width :: Number, height :: Number, speed :: Number, image :: CanvasImageSource, frameStart :: Instant, direction :: Direction, animation :: Animation}
 type GameState = { player :: GameObject }

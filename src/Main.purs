@@ -20,33 +20,13 @@ import Data.Ordering
 import Web.HTML.Window (toEventTarget)
 import Data.DateTime.Instant (unInstant)
 import Data.Time.Duration
-import Data.Foldable
 import Data.Int (toNumber)
 
 import State
 import Keys
 import Rendering
-
-transformState ::  GameState -> Set.Set Direction -> Milliseconds -> GameState
-transformState state keys (Milliseconds delta) = state { player = (foldl applyKeys standingPlayer keys) }
-  where
-  standingPlayer = state.player { animation = STANDING }
-  applyKeys obj UP = obj { y = obj.y - (obj.speed * delta) / 1000.0, direction = UP, animation = MOVEMENT }
-  applyKeys obj DOWN = obj { y = obj.y + (obj.speed * delta) / 1000.0, direction = DOWN, animation = MOVEMENT }
-  applyKeys obj LEFT = obj { x = obj.x - (obj.speed * delta) / 1000.0, direction = LEFT, animation = MOVEMENT }
-  applyKeys obj RIGHT = obj { x = obj.x + (obj.speed * delta) / 1000.0, direction = RIGHT, animation = MOVEMENT }
-
-step :: Instant -> GameState -> Ref.Ref (Set.Set Direction) -> Effect Unit
-step lastFrame state keysRef = do
-  time <- now
-  keys <- Ref.read keysRef
-  let delta = subMiliseconds (unInstant time) (unInstant lastFrame)
-  let newState = transformState state keys delta
-
-  render newState
-  currentWindow <- window
-  void $ requestAnimationFrame (step time newState keysRef) currentWindow
-  where subMiliseconds (Milliseconds a) (Milliseconds b) = Milliseconds (a - b)
+import Utils
+import Frame
 
 
 start :: Maybe CanvasImageSource -> Effect Unit
