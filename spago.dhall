@@ -2,7 +2,6 @@
 , dependencies =
   [ "canvas"
   , "console"
-  , "control"
   , "datetime"
   , "effect"
   , "foldable-traversable"
