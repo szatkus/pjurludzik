@@ -11,6 +11,7 @@
   , "partial"
   , "prelude"
   , "refs"
+  , "web-events"
   , "web-html"
   , "web-uievents"
   ]
