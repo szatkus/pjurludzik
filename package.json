@@ -1,0 +1,13 @@
+{
+  "name": "pjurludzik",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "purescript": "^0.14.0",
+    "spago": "^0.20.0"
+  },
+  "devDependencies": {},
+  "scripts": {},
+  "license": "ISC"
+}
