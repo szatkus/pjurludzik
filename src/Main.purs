@@ -16,8 +16,6 @@ import Data.Set as Set
 import Effect.Ref as Ref
 import Partial.Unsafe (unsafePartial)
 import Web.Event.EventTarget (addEventListener, eventListener)
-import Web.Event.Event (Event)
-import Web.UIEvent.KeyboardEvent (fromEvent, key)
 import Data.Ordering
 import Web.HTML.Window (toEventTarget)
 import Data.DateTime.Instant (unInstant)
@@ -26,6 +24,7 @@ import Data.Foldable
 import Data.Int (toNumber)
 
 import State
+import Keys
 
 draw :: Context2D -> GameObject -> Effect Unit
 draw context obj = do
@@ -36,28 +35,6 @@ draw context obj = do
     getY LEFT = 1.0
     getY RIGHT = 2.0
 
-
-keyToDir "w" = Just UP
-keyToDir "ArrowUp" = Just UP
-keyToDir "s" = Just DOWN
-keyToDir "ArrowDown" = Just DOWN
-keyToDir "a" = Just LEFT
-keyToDir "ArrowLeft" = Just LEFT
-keyToDir "d" = Just RIGHT
-keyToDir "ArrowRight" = Just RIGHT
-keyToDir _ = Nothing
-
-keyListener :: (Direction -> Set.Set Direction -> Set.Set Direction) -> Ref.Ref (Set.Set Direction) -> Event -> Effect Unit
-keyListener op ref event = do 
-  keys <- Ref.read ref
-  let direction = keyToDir $ key $ unsafePartial $ fromJust $ fromEvent $ event
-  case direction of
-    Just dir -> Ref.write (op dir keys) ref
-    Nothing -> mempty
-
-
-onKeyUp = keyListener Set.delete
-onKeyDown = keyListener Set.insert
 
 width = 800.0
 height = 600.0
