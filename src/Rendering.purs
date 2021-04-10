@@ -35,8 +35,6 @@ loadResources = tryLoadImage "ludzik.png"
 draw :: Context2D -> GameObject -> Effect Unit
 draw context obj = do
   time <- now
-  log $ show (mod 13 4)
-  --log $ show $ (getX obj.animation $ substractMilliseconds (unInstant time) (unInstant obj.frameStart))
   drawImageFull context obj.image (getX obj.animation $ substractMilliseconds (unInstant time) (unInstant obj.frameStart)) (getY obj.direction * obj.height) obj.width obj.height obj.x obj.y obj.width obj.height
   where
     getY UP = 3.0
