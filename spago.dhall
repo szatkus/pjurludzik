@@ -5,6 +5,8 @@
   , "control"
   , "datetime"
   , "effect"
+  , "foldable-traversable"
+  , "integers"
   , "maybe"
   , "now"
   , "ordered-collections"
@@ -16,5 +18,5 @@
   , "web-uievents"
   ]
 , packages = ./packages.dhall
-, sources = [ "src/**/*.purs", "test/**/*.purs" ]
+, sources = [ "src/**/*.purs" ]
 }

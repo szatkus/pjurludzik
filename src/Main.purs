@@ -20,6 +20,10 @@ import Web.Event.Event (Event)
 import Web.UIEvent.KeyboardEvent (fromEvent, key)
 import Data.Ordering
 import Web.HTML.Window (toEventTarget)
+import Data.DateTime.Instant (unInstant)
+import Data.Time.Duration
+import Data.Foldable
+import Data.Int (toNumber)
 
 data Direction = UP | DOWN | LEFT | RIGHT
 
@@ -33,6 +37,12 @@ instance directionOrdering :: Ord Direction where
 
 instance directionEq :: Eq Direction where
   eq a b = eq (dirToInt a) (dirToInt b)
+
+instance directionShow :: Show Direction where
+  show UP = "UP"
+  show DOWN = "DOWN"
+  show LEFT = "LEFT"
+  show RIGHT = "RIGHT"
 
 type GameObject = { x :: Number, y :: Number, width :: Number, height :: Number, speed :: Number, image :: CanvasImageSource, frameStart :: Instant, direction :: Direction}
 type GameState = { player :: GameObject }
@@ -68,12 +78,26 @@ keyListener op ref event = do
 onKeyUp = keyListener Set.delete
 onKeyDown = keyListener Set.insert
 
+transformState ::  GameState -> Set.Set Direction -> Milliseconds -> GameState
+transformState state keys (Milliseconds delta) = state { player = (foldl applyKeys state.player keys) }
+  where 
+  applyKeys obj UP = obj { y = obj.y - (obj.speed * delta) / 1000.0, direction = UP }
+  applyKeys obj DOWN = obj { y = obj.y + (obj.speed * delta) / 1000.0, direction = DOWN }
+  applyKeys obj LEFT = obj { x = obj.x - (obj.speed * delta) / 1000.0, direction = LEFT }
+  applyKeys obj RIGHT = obj { x = obj.x + (obj.speed * delta) / 1000.0, direction = RIGHT }
+
 step :: Instant -> GameState -> Ref.Ref (Set.Set Direction) -> Effect Unit
-step lastFrame state keys = do
+step lastFrame state keysRef = do
   time <- now
-  draw state.player
+  keys <- Ref.read keysRef
+  let delta = subMiliseconds (unInstant time) (unInstant lastFrame)
+  let newState = transformState state keys delta
+
+  draw newState.player
+
   currentWindow <- window
-  void $ requestAnimationFrame (step time state keys) currentWindow
+  void $ requestAnimationFrame (step time newState keysRef) currentWindow
+  where subMiliseconds (Milliseconds a) (Milliseconds b) = Milliseconds (a - b)
 
 
 start :: Maybe CanvasImageSource -> Effect Unit
@@ -83,9 +107,12 @@ start (Just image) =  do
   keys <- Ref.new Set.empty
   time <- now
   keyDownListener <- eventListener $ onKeyDown keys
-  let state = { player : { x: 50.0, y: 50.0, width: 34.0, height: 52.0, speed: 10.0, image: image, frameStart: time, direction: DOWN }}
+  keyUpListener <- eventListener $ onKeyUp keys
+  
+  let state = { player : { x: 50.0, y: 50.0, width: 34.0, height: 52.0, speed: 100.0, image: image, frameStart: time, direction: DOWN }}
 
   addEventListener keydown keyDownListener false (toEventTarget currentWindow)
+  addEventListener keyup keyUpListener false (toEventTarget currentWindow)
   void $ requestAnimationFrame (step time state keys) currentWindow
 
 start Nothing = error "Się wyjebało, a nie powinno"
