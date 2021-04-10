@@ -25,28 +25,7 @@ import Data.Time.Duration
 import Data.Foldable
 import Data.Int (toNumber)
 
-data Direction = UP | DOWN | LEFT | RIGHT
-
-dirToInt UP = 0
-dirToInt DOWN = 1
-dirToInt LEFT = 2
-dirToInt RIGHT = 3
-
-instance directionOrdering :: Ord Direction where
-  compare a b = compare (dirToInt a) (dirToInt b)
-
-instance directionEq :: Eq Direction where
-  eq a b = eq (dirToInt a) (dirToInt b)
-
-instance directionShow :: Show Direction where
-  show UP = "UP"
-  show DOWN = "DOWN"
-  show LEFT = "LEFT"
-  show RIGHT = "RIGHT"
-
-type GameObject = { x :: Number, y :: Number, width :: Number, height :: Number, speed :: Number, image :: CanvasImageSource, frameStart :: Instant, direction :: Direction}
-type GameState = { player :: GameObject }
-
+import State
 
 draw :: Context2D -> GameObject -> Effect Unit
 draw context obj = do
@@ -84,12 +63,13 @@ width = 800.0
 height = 600.0
 
 transformState ::  GameState -> Set.Set Direction -> Milliseconds -> GameState
-transformState state keys (Milliseconds delta) = state { player = (foldl applyKeys state.player keys) }
-  where 
-  applyKeys obj UP = obj { y = obj.y - (obj.speed * delta) / 1000.0, direction = UP }
-  applyKeys obj DOWN = obj { y = obj.y + (obj.speed * delta) / 1000.0, direction = DOWN }
-  applyKeys obj LEFT = obj { x = obj.x - (obj.speed * delta) / 1000.0, direction = LEFT }
-  applyKeys obj RIGHT = obj { x = obj.x + (obj.speed * delta) / 1000.0, direction = RIGHT }
+transformState state keys (Milliseconds delta) = state { player = (foldl applyKeys standingPlayer keys) }
+  where
+  standingPlayer = state.player { animation = STANDING }
+  applyKeys obj UP = obj { y = obj.y - (obj.speed * delta) / 1000.0, direction = UP, animation = MOVEMENT }
+  applyKeys obj DOWN = obj { y = obj.y + (obj.speed * delta) / 1000.0, direction = DOWN, animation = MOVEMENT }
+  applyKeys obj LEFT = obj { x = obj.x - (obj.speed * delta) / 1000.0, direction = LEFT, animation = MOVEMENT }
+  applyKeys obj RIGHT = obj { x = obj.x + (obj.speed * delta) / 1000.0, direction = RIGHT, animation = MOVEMENT }
 
 step :: Instant -> GameState -> Ref.Ref (Set.Set Direction) -> Effect Unit
 step lastFrame state keysRef = do
@@ -121,7 +101,7 @@ start (Just image) =  do
   keyDownListener <- eventListener $ onKeyDown keys
   keyUpListener <- eventListener $ onKeyUp keys
   
-  let state = { player : { x: 50.0, y: 50.0, width: 34.0, height: 52.0, speed: 100.0, image: image, frameStart: time, direction: DOWN }}
+  let state = { player : { x: 50.0, y: 50.0, width: 34.0, height: 52.0, speed: 100.0, image: image, frameStart: time, direction: DOWN, animation: STANDING }}
 
   addEventListener keydown keyDownListener false (toEventTarget currentWindow)
   addEventListener keyup keyUpListener false (toEventTarget currentWindow)
